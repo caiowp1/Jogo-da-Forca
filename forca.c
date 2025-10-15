@@ -15,6 +15,7 @@ int main(void)
     
     char jogador1[10];
     char jogador2[10];
+    char tema[30];  
     char palavra[20];
     char tentativa;
     int advinhador;
@@ -39,6 +40,8 @@ int main(void)
     printf("Digite o nome do Jogador 2:\n");
 
     scanf("%s", jogador2);
+
+    system("clear || cls");
 
     while (opcao != 1) {
       
@@ -69,14 +72,20 @@ int main(void)
             pontosAdvinhador = &pontos1;
             pontosDesafiante = &pontos2;
 
+            printf("%s, qual o tema da palavra secreta?\n", jogador2);
+            scanf("%s", tema);
             printf("%s, digite a palavra secreta:\n", jogador2);
             scanf("%s", palavra);
+
+
 
         } else if (advinhador == 2) {
 
             pontosAdvinhador = &pontos2;
             pontosDesafiante = &pontos1;
 
+            printf("%s, qual o tema da palavra secreta?\n", jogador1);
+            scanf("%s", tema);
             printf("%s, digite a palavra secreta:\n", jogador1);
             scanf("%s", palavra);
 
@@ -85,6 +94,7 @@ int main(void)
         system("clear || cls");
 
         printf("A palavra secreta foi definida. Vamos comecar o jogo!\n");
+        printf("O tema da palavra secreta e: %s\n", tema);
         printf("A palavra secreta tem %lu letras.\n", strlen(palavra));
 
         int tamanho = strlen(palavra); 
