@@ -15,9 +15,9 @@ int main(void)
     
     char jogador1[10];
     char jogador2[10];
-    char advinhador[10];
     char palavra[20];
     char tentativa;
+    int advinhador;
     int opcao = 0;
     int pontos1 = 0;
     int pontos2 = 0;
@@ -25,6 +25,12 @@ int main(void)
     int *pontosDesafiante; 
    
     printf("Bem vindo ao jogo da forca!\n");
+        printf(" ___   \n");
+        printf("/  |   \n");
+        printf("|  O   \n");
+        printf("| /|\\ \n");
+        printf("| / \\ \n");
+        printf("|_____ \n");
     printf("O advinhador podera errar ate 4 vezes.\n");
     printf("Digite o nome do Jogador 1:\n");
 
@@ -42,20 +48,23 @@ int main(void)
         printf("Pontos de %s: %d\n", jogador1, pontos1);
         printf("Pontos de %s: %d\n", jogador2, pontos2);
 
-        printf("Quem advinhara a palavra secreta?\n");
-        printf("%s ou %s\n", jogador1, jogador2);
+        printf("Digite o numero de quem advinhara a palavra secreta:\n");
+        printf("1. %s\n", jogador1);
+        printf("2. %s\n", jogador2);
 
-        scanf("%s", advinhador);
+        scanf(" %d", &advinhador);
 
-        while ((strcmp(advinhador, jogador1) != 0) && (strcmp(advinhador, jogador2) != 0)) {
+        while ((advinhador != 1) && (advinhador != 2)) {
 
-            printf("Jogador invalido. Selecione %s ou %s\n", jogador1, jogador2);
+            printf("Jogador invalido. Selecione 1. %s ou 2. %s\n", jogador1, jogador2);
 
-            scanf("%s", advinhador);
+            scanf("%d", &advinhador);
 
         } 
+
+        system("clear || cls");
     
-        if (strcmp(advinhador, jogador1) == 0) {
+        if (advinhador == 1) {
 
             pontosAdvinhador = &pontos1;
             pontosDesafiante = &pontos2;
@@ -63,7 +72,7 @@ int main(void)
             printf("%s, digite a palavra secreta:\n", jogador2);
             scanf("%s", palavra);
 
-        } else if (strcmp(advinhador, jogador2) == 0) {
+        } else if (advinhador == 2) {
 
             pontosAdvinhador = &pontos2;
             pontosDesafiante = &pontos1;
@@ -82,7 +91,6 @@ int main(void)
         char letrasCertas[20]; 
 
         for (int i = 0; i < tamanho; i++) {
-           // letrasCertas[i] = '_';
 
             if (palavra[i] == ' ') {
                 letrasCertas[i] = palavra[i];
