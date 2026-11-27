@@ -32,3 +32,15 @@ No Windows, execute `.\teste_jogo.exe`. O teste termina sem mensagem quando pass
 
 `jogo.c` contem as regras; `terminal.c`, a entrada e exibicao; `placar.c`, o historico de vitorias; e `forca.c`, o fluxo das rodadas.
 
+## Interface grafica (Windows)
+
+A versao grafica usa [raylib 6.2](https://github.com/raysan5/raylib/releases/tag/6.2), com o pacote `win64_mingw-w64` e um compilador MinGW-w64 de 64 bits. Extraia o pacote e ajuste o caminho em `$ray` para a pasta extraida. No PowerShell, na pasta do projeto:
+
+```powershell
+$ray = 'C:\caminho\para\raylib-6.2_win64_mingw-w64'
+gcc -std=c99 -Wall -Wextra -pedantic -I "$ray\include" grafico.c jogo.c placar.c -L "$ray\lib" -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -o forca-grafica.exe
+.\forca-grafica.exe
+```
+
+Clique nos campos e use Tab para mudar de campo. A palavra secreta fica oculta; na rodada use o teclado ou clique nas letras. O ranking mostra os dez jogadores com mais vitorias e usa o mesmo arquivo `placar-forca.txt` da versao de terminal, na pasta de execucao. A versao de terminal continua disponivel com o comando anterior.
+
