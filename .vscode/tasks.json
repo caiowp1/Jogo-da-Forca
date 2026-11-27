@@ -4,7 +4,7 @@
     "type": "shell",
     "label": "Compilar jogo da forca",
     "command": "gcc",
-    "args": ["-std=c99", "-Wall", "-Wextra", "-pedantic", "-g", "${workspaceFolder}/forca.c", "${workspaceFolder}/jogo.c", "${workspaceFolder}/terminal.c", "-o", "${workspaceFolder}/forca.exe"],
+    "args": ["-std=c99", "-Wall", "-Wextra", "-pedantic", "-g", "${workspaceFolder}/forca.c", "${workspaceFolder}/jogo.c", "${workspaceFolder}/terminal.c", "${workspaceFolder}/placar.c", "-o", "${workspaceFolder}/forca.exe"],
     "problemMatcher": ["$gcc"],
     "group": {"kind": "build", "isDefault": true}
   }]
