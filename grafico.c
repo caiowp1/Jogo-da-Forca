@@ -103,7 +103,7 @@ int main(void) {
         } else if(tela==PREPARAR) {
             Rectangle caixas[]={{80,147,360,48},{500,147,360,48},{80,239,780,48},{80,331,780,48}};
             DrawText("Prepare a rodada", 60, 74, 34, texto);
-            DrawText("Quem vai adivinhar deve desviar o olhar.", 60, 115, 17, suave);
+            DrawText("Quem vai adivinhar deve desviar o olhar.", 80, 625, 17, suave);
             for(i=0;i<4;i++) { if(click && CheckCollisionPointRec(GetMousePosition(),caixas[i])) campo_ativo=i; }
             campo(caixas[0],"Jogador 1",nomes[0],campo_ativo==0,0); campo(caixas[1],"Jogador 2",nomes[1],campo_ativo==1,0);
             campo(caixas[2],"Tema",tema,campo_ativo==2,0); campo(caixas[3],"Palavra ou frase secreta (ate 60 caracteres)",segredo,campo_ativo==3,1);
