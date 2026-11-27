@@ -38,9 +38,11 @@ A versao grafica usa [raylib 6.2](https://github.com/raysan5/raylib/releases/tag
 
 ```powershell
 $ray = 'C:\caminho\para\raylib-6.2_win64_mingw-w64'
-gcc -std=c99 -Wall -Wextra -pedantic -I "$ray\include" grafico.c jogo.c placar.c -L "$ray\lib" -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -o forca-grafica.exe
+gcc -std=c99 -Wall -Wextra -pedantic -I "$ray\include" grafico.c jogo.c placar.c perfis.c -L "$ray\lib" -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows -o forca-grafica.exe
 .\forca-grafica.exe
 ```
 
-Clique nos campos e use Tab para mudar de campo. A palavra secreta fica oculta; na rodada use o teclado ou clique nas letras. O ranking mostra os dez jogadores com mais vitorias e usa o mesmo arquivo `placar-forca.txt` da versao de terminal, na pasta de execucao. A versao de terminal continua disponivel com o comando anterior.
+No menu Perfis, cadastre cada jogador uma vez. Na preparacao, selecione dois perfis diferentes; tambem e possivel cadastrar um perfil a partir da tela de selecao. Os nomes aceitam ate 9 bytes em UTF-8 (letras acentuadas ocupam mais de um byte), nao podem comecar ou terminar com espaco e nao podem ser duplicados, mesmo com diferenca entre letras maiusculas e minusculas ASCII. Os perfis ficam em `perfis-forca.txt` na pasta de execucao; a pasta precisa permitir gravacao. Eles nao exigem senha e nao impedem outra pessoa de seleciona-los.
+
+Se ja tiver um placar, cadastre o nome exatamente como foi usado antes (inclusive maiusculas e acentos) para manter as vitorias correspondentes. Os arquivos antigos nao sao apagados nem importados automaticamente. Clique nos campos e use Tab para alternar entre tema e palavra. A palavra secreta fica oculta; na rodada use o teclado ou clique nas letras. O ranking mostra os dez jogadores com mais vitorias e usa o mesmo arquivo `placar-forca.txt` da versao de terminal, na pasta de execucao. A versao de terminal continua disponivel com o comando anterior e continua usando nomes digitados.
 

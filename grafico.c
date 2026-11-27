@@ -1,11 +1,12 @@
 #include "raylib.h"
 #include "jogo.h"
 #include "placar.h"
+#include "perfis.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-typedef enum { MENU, PREPARAR, JOGAR, RESULTADO, RANKING } Tela;
+typedef enum { MENU, PREPARAR, JOGAR, RESULTADO, RANKING, PERFIS, SELECIONAR, NOVO_PERFIL } Tela;
 typedef struct { char nome[256]; int pontos; } Jogador;
 static const Color fundo = {20, 23, 38, 255}, painel = {35, 39, 57, 255};
 static const Color roxo = {166, 148, 255, 255}, verde = {207, 247, 112, 255};
@@ -81,11 +82,14 @@ static void forca(int erros, int max) {
 }
 
 int main(void) {
-    Tela tela=MENU; Jogo jogo; int campo_ativo=0, adiv=0, limite=4, pontos[2]={0,0}, salvo=1;
+    Tela tela=MENU, origem_perfil=PERFIS; Jogo jogo; int campo_ativo=0, adiv=0, limite=4, pontos[2]={0,0}, salvo=1;
     char nomes[2][10]={{0}}, tema[30]={0}, segredo[TAM_PALAVRA]={0}, mensagem[160]={0};
-    char *campos[]={nomes[0],nomes[1],tema,segredo};
-    const size_t caps[]={sizeof nomes[0],sizeof nomes[1],sizeof tema,sizeof segredo};
-    const int limites[]={9,9,29,60};
+    char nome_novo[PERFIL_NOME]={0}; Perfis perfis={0};
+    const char *arquivo_perfis="perfis-forca.txt";
+    int perfis_ok=perfis_carregar(&perfis,arquivo_perfis), selecao_jogador=0, pagina=0;
+    char *campos[]={tema,segredo};
+    const size_t caps[]={sizeof tema,sizeof segredo};
+    const int limites[]={29,60};
     int i;
     SetConfigFlags(FLAG_VSYNC_HINT); InitWindow(960, 680, "Jogo da Forca"); SetTargetFPS(60);
     while(!WindowShouldClose()) {
@@ -98,18 +102,22 @@ int main(void) {
             DrawText("Chame alguem e comece uma rodada.", 72, 267, 20, suave);
             if(botao((Rectangle){70,330,240,52},"Jogar",verde,fundo)) tela=PREPARAR;
             if(botao((Rectangle){70,397,240,52},"Ver ranking",painel,texto)) tela=RANKING;
-            if(botao((Rectangle){70,464,240,52},"Sair",painel,texto)) { EndDrawing(); CloseWindow(); return 0; }
+            if(botao((Rectangle){70,464,240,52},"Perfis",painel,texto)) { perfis_ok=perfis_carregar(&perfis,arquivo_perfis); pagina=0; mensagem[0]=0; tela=PERFIS; }
+            if(botao((Rectangle){70,531,240,52},"Sair",painel,texto)) { EndDrawing(); CloseWindow(); return 0; }
             BeginMode2D((Camera2D){.offset={460,25},.zoom=1}); forca(6,6); EndMode2D();
         } else if(tela==PREPARAR) {
             Rectangle caixas[]={{80,147,360,48},{500,147,360,48},{80,239,780,48},{80,331,780,48}};
             DrawText("Prepare a rodada", 60, 74, 34, texto);
             DrawText("Quem vai adivinhar deve desviar o olhar.", 80, 625, 17, suave);
-            for(i=0;i<4;i++) { if(click && CheckCollisionPointRec(GetMousePosition(),caixas[i])) campo_ativo=i; }
-            campo(caixas[0],"Jogador 1",nomes[0],campo_ativo==0,0); campo(caixas[1],"Jogador 2",nomes[1],campo_ativo==1,0);
-            campo(caixas[2],"Tema",tema,campo_ativo==2,0); campo(caixas[3],"Palavra ou frase secreta (ate 60 caracteres)",segredo,campo_ativo==3,1);
+            DrawText("Jogador 1",80,123,17,suave); DrawText("Jogador 2",500,123,17,suave);
+            if(botao(caixas[0],nomes[0][0]?nomes[0]:"Selecionar perfil",painel,texto)) { perfis_ok=perfis_carregar(&perfis,arquivo_perfis); selecao_jogador=0; pagina=0; mensagem[0]=0; tela=SELECIONAR; }
+            if(botao(caixas[1],nomes[1][0]?nomes[1]:"Selecionar perfil",painel,texto)) { perfis_ok=perfis_carregar(&perfis,arquivo_perfis); selecao_jogador=1; pagina=0; mensagem[0]=0; tela=SELECIONAR; }
+            if(click && CheckCollisionPointRec(GetMousePosition(),caixas[2])) campo_ativo=0;
+            if(click && CheckCollisionPointRec(GetMousePosition(),caixas[3])) campo_ativo=1;
+            campo(caixas[2],"Tema",tema,campo_ativo==0,0); campo(caixas[3],"Palavra ou frase secreta (ate 60 caracteres)",segredo,campo_ativo==1,1);
             while((cp=GetCharPressed())>0) inserir(campos[campo_ativo],caps[campo_ativo],cp,limites[campo_ativo]);
             if(IsKeyPressed(KEY_BACKSPACE)) apagar(campos[campo_ativo]);
-            if(IsKeyPressed(KEY_TAB)) campo_ativo=(campo_ativo+1)%4;
+            if(IsKeyPressed(KEY_TAB)) campo_ativo=(campo_ativo+1)%2;
             DrawText("Quem adivinha?",80,415,18,suave);
             if(botao((Rectangle){80,445,150,40},"Jogador 1",adiv==0?roxo:painel,texto)) adiv=0;
             if(botao((Rectangle){240,445,150,40},"Jogador 2",adiv==1?roxo:painel,texto)) adiv=1;
@@ -120,7 +128,7 @@ int main(void) {
             DrawText(mensagem,80,505,18,(Color){255,160,160,255});
             if(botao((Rectangle){80,550,190,48},"Voltar",painel,texto)) {tela=MENU;mensagem[0]=0;}
             if(botao((Rectangle){600,550,260,48},"Comecar rodada",verde,fundo)) {
-                if(!nomes[0][0] || !nomes[1][0] || !tema[0] || !strcmp(nomes[0],nomes[1])) snprintf(mensagem,sizeof mensagem,"Informe nomes diferentes e um tema.");
+                if(!nomes[0][0] || !nomes[1][0] || !tema[0] || !strcmp(nomes[0],nomes[1])) snprintf(mensagem,sizeof mensagem,"Selecione dois perfis diferentes e informe um tema.");
                 else if(!jogo_iniciar(&jogo,segredo,limite)) snprintf(mensagem,sizeof mensagem,"Use letras portuguesas e espacos na palavra.");
                 else { if(!placar_ler(arquivo,nomes[0],&pontos[0]) || !placar_ler(arquivo,nomes[1],&pontos[1])) snprintf(mensagem,sizeof mensagem,"Nao foi possivel ler o placar."); else mensagem[0]=0; memset(segredo,0,sizeof segredo); tela=JOGAR; }
             }
@@ -145,10 +153,45 @@ int main(void) {
             } else {
                 DrawText(mensagem,390,355,26,verde);
                 if(!salvo) DrawText("Nao foi possivel salvar o placar.",390,525,17,(Color){255,160,160,255});
-                if(botao((Rectangle){390,455,230,48},"Proxima rodada",verde,fundo)) { tela=PREPARAR; adiv=1-adiv; tema[0]=0; campo_ativo=2; mensagem[0]=0; }
+                if(botao((Rectangle){390,455,230,48},"Proxima rodada",verde,fundo)) { tela=PREPARAR; adiv=1-adiv; tema[0]=0; campo_ativo=0; mensagem[0]=0; }
                 if(botao((Rectangle){635,455,200,48},"Menu inicial",painel,texto)) { tela=MENU; tema[0]=0; mensagem[0]=0; }
             }
-        } else if(tela==RANKING) { ranking(); if(botao((Rectangle){60,570,200,48},"Voltar",painel,texto)) tela=MENU; }
+        } else if(tela==RANKING) { ranking(); if(botao((Rectangle){60,570,200,48},"Voltar",painel,texto)) tela=MENU;
+        } else if(tela==PERFIS || tela==SELECIONAR) {
+            int inicio=pagina*8, fim=inicio+8;
+            DrawText(tela==PERFIS?"Perfis cadastrados":TextFormat("Perfil do jogador %d",selecao_jogador+1),60,85,32,texto);
+            if(!perfis_ok) DrawText("Nao foi possivel ler os perfis salvos.",60,145,20,(Color){255,160,160,255});
+            else if(!perfis.total) DrawText("Nenhum perfil cadastrado. Adicione um perfil.",60,145,20,suave);
+            if(fim>perfis.total) fim=perfis.total;
+            for(i=inicio;i<fim;i++) {
+                Rectangle r={60.0f+(float)((i-inicio)%2)*410,145.0f+(float)((i-inicio)/2)*72,380,52};
+                if(botao(r,perfis.nomes[i],painel,texto) && tela==SELECIONAR) {
+                    if(!strcmp(nomes[1-selecao_jogador],perfis.nomes[i])) snprintf(mensagem,sizeof mensagem,"Escolha um perfil diferente para cada jogador.");
+                    else { strcpy(nomes[selecao_jogador],perfis.nomes[i]); mensagem[0]=0; tela=PREPARAR; }
+                }
+            }
+            DrawText(mensagem,60,450,18,(Color){255,160,160,255});
+            if(pagina>0 && botao((Rectangle){60,480,150,44},"Anterior",painel,texto)) pagina--;
+            if(fim<perfis.total && botao((Rectangle){220,480,150,44},"Proxima",painel,texto)) pagina++;
+            if(botao((Rectangle){60,565,190,48},"Voltar",painel,texto)) { tela=tela==PERFIS?MENU:PREPARAR; mensagem[0]=0; }
+            if(perfis_ok && botao((Rectangle){600,565,260,48},"Adicionar perfil",verde,fundo)) { origem_perfil=tela; tela=NOVO_PERFIL; nome_novo[0]=0; mensagem[0]=0; }
+        } else if(tela==NOVO_PERFIL) {
+            DrawText("Adicionar perfil",60,85,32,texto);
+            DrawText("Escolha um nome unico, de ate 9 bytes.",80,152,19,suave);
+            campo((Rectangle){80,220,480,52},"Nome do perfil",nome_novo,1,0);
+            while((cp=GetCharPressed())>0) inserir(nome_novo,sizeof nome_novo,cp,9);
+            if(IsKeyPressed(KEY_BACKSPACE)) apagar(nome_novo);
+            DrawText(mensagem,80,315,18,(Color){255,160,160,255});
+            if(botao((Rectangle){80,390,190,48},"Cancelar",painel,texto)) { tela=origem_perfil; mensagem[0]=0; }
+            if(botao((Rectangle){380,390,210,48},"Salvar perfil",verde,fundo)) {
+                PerfilResultado r=perfis_adicionar(&perfis,arquivo_perfis,nome_novo);
+                if(r==PERFIL_OK) { pagina=(perfis.total-1)/8; tela=origem_perfil; mensagem[0]=0; }
+                else if(r==PERFIL_DUPLICADO) snprintf(mensagem,sizeof mensagem,"Esse nome ja existe. Escolha outro.");
+                else if(r==PERFIL_INVALIDO) snprintf(mensagem,sizeof mensagem,"Use um nome valido, sem espacos nas pontas.");
+                else if(r==PERFIL_CHEIO) snprintf(mensagem,sizeof mensagem,"Limite de perfis atingido.");
+                else snprintf(mensagem,sizeof mensagem,"Nao foi possivel salvar os perfis.");
+            }
+        }
         EndDrawing();
     }
     CloseWindow(); return 0;
