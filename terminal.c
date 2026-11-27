@@ -67,8 +67,10 @@ void terminal_mostrar_jogo(const Jogo *jogo, const char *tema) {
     puts(desenhos[jogo->erros]);
     printf("Palavra: ");
     for (i = 0; jogo->revelada[i]; i++) {
-        if (jogo->revelada[i] == ' ') printf("   ");
-        else printf("%c ", jogo->revelada[i]);
+        unsigned char c = (unsigned char)jogo->revelada[i];
+        if (c == ' ') printf("   ");
+        else if (c >= 0xc0 && jogo->revelada[i + 1]) { printf("%c%c ", c, jogo->revelada[++i]); }
+        else printf("%c ", c);
     }
     printf("\nLetras tentadas: ");
     for (i = 0; i < 26; i++) if (jogo->tentadas[i]) { printf("%c ", (int)('A' + i)); alguma = 1; }
