@@ -99,7 +99,7 @@ int main(void) {
             if(botao((Rectangle){70,330,240,52},"Jogar",verde,fundo)) tela=PREPARAR;
             if(botao((Rectangle){70,397,240,52},"Ver ranking",painel,texto)) tela=RANKING;
             if(botao((Rectangle){70,464,240,52},"Sair",painel,texto)) { EndDrawing(); CloseWindow(); return 0; }
-            BeginMode2D((Camera2D){.offset={460,25},.zoom=1}); forca(4,6); EndMode2D();
+            BeginMode2D((Camera2D){.offset={460,25},.zoom=1}); forca(6,6); EndMode2D();
         } else if(tela==PREPARAR) {
             Rectangle caixas[]={{80,147,360,48},{500,147,360,48},{80,239,780,48},{80,331,780,48}};
             DrawText("Prepare a rodada", 60, 74, 34, texto);
