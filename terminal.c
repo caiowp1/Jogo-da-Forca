@@ -1,6 +1,31 @@
+#ifndef _WIN32
+#define _POSIX_C_SOURCE 200809L
+#endif
 #include "terminal.h"
 #include <stdio.h>
 #include <string.h>
+#ifdef _WIN32
+#include <windows.h>
+#include <io.h>
+#else
+#include <unistd.h>
+#include <termios.h>
+#include <signal.h>
+#endif
+
+#ifdef _WIN32
+static HANDLE console_secreto;
+static DWORD modo_original;
+static BOOL WINAPI restaurar_em_interrupcao(DWORD evento) {
+    if (evento == CTRL_C_EVENT || evento == CTRL_BREAK_EVENT || evento == CTRL_CLOSE_EVENT) {
+        SetConsoleMode(console_secreto, modo_original);
+    }
+    return FALSE;
+}
+#else
+static volatile sig_atomic_t sinal_recebido;
+static void guardar_sinal(int sinal) { sinal_recebido = sinal; }
+#endif
 
 static int ler_linha(char *destino, size_t tamanho) {
     for (;;) {
@@ -25,6 +50,78 @@ int terminal_ler_texto(const char *pedido, char *destino, size_t tamanho) {
         if (destino[i] != '\0') return 1;
         puts("A entrada nao pode ficar vazia.");
     }
+}
+
+int terminal_ler_segredo(const char *pedido, char *destino, size_t tamanho) {
+    int resultado;
+#ifdef _WIN32
+    HANDLE entrada = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD original;
+    if (!_isatty(_fileno(stdin))) return terminal_ler_texto(pedido, destino, tamanho);
+    if (entrada == INVALID_HANDLE_VALUE || !GetConsoleMode(entrada, &original)) {
+        fputs("Nao foi possivel ocultar a entrada. Jogo encerrado.\n", stderr);
+        return 0;
+    }
+    console_secreto = entrada;
+    modo_original = original;
+    if (!SetConsoleCtrlHandler(restaurar_em_interrupcao, TRUE)) {
+        fputs("Nao foi possivel proteger a entrada. Jogo encerrado.\n", stderr);
+        return 0;
+    }
+    if (!SetConsoleMode(entrada, original & ~(ENABLE_ECHO_INPUT))) {
+        SetConsoleCtrlHandler(restaurar_em_interrupcao, FALSE);
+        fputs("Nao foi possivel ocultar a entrada. Jogo encerrado.\n", stderr);
+        return 0;
+    }
+    resultado = terminal_ler_texto(pedido, destino, tamanho);
+    if (!SetConsoleMode(entrada, original)) {
+        SetConsoleCtrlHandler(restaurar_em_interrupcao, FALSE);
+        fputs("Nao foi possivel restaurar a configuracao do console.\n", stderr);
+        return 0;
+    }
+    SetConsoleCtrlHandler(restaurar_em_interrupcao, FALSE);
+#else
+    struct termios original, oculto;
+    struct sigaction acao, anteriores[3];
+    const int sinais[] = {SIGINT, SIGTERM, SIGHUP};
+    size_t i, instalados = 0;
+    int sinal;
+    if (!isatty(STDIN_FILENO)) return terminal_ler_texto(pedido, destino, tamanho);
+    if (tcgetattr(STDIN_FILENO, &original) != 0) {
+        fputs("Nao foi possivel ocultar a entrada. Jogo encerrado.\n", stderr);
+        return 0;
+    }
+    memset(&acao, 0, sizeof acao);
+    acao.sa_handler = guardar_sinal;
+    sigemptyset(&acao.sa_mask);
+    sinal_recebido = 0;
+    for (i = 0; i < 3; i++) {
+        if (sigaction(sinais[i], &acao, &anteriores[i]) != 0) break;
+        instalados++;
+    }
+    if (instalados != 3) {
+        while (instalados) { instalados--; sigaction(sinais[instalados], &anteriores[instalados], NULL); }
+        fputs("Nao foi possivel proteger a entrada. Jogo encerrado.\n", stderr);
+        return 0;
+    }
+    oculto = original;
+    oculto.c_lflag &= (tcflag_t)~(ECHO | ECHONL);
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &oculto) != 0) {
+        for (i = 0; i < 3; i++) sigaction(sinais[i], &anteriores[i], NULL);
+        fputs("Nao foi possivel ocultar a entrada. Jogo encerrado.\n", stderr);
+        return 0;
+    }
+    resultado = terminal_ler_texto(pedido, destino, tamanho);
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &original) != 0) {
+        fputs("Nao foi possivel restaurar a configuracao do terminal.\n", stderr);
+        resultado = 0;
+    }
+    sinal = sinal_recebido;
+    for (i = 0; i < 3; i++) sigaction(sinais[i], &anteriores[i], NULL);
+    if (sinal) raise(sinal);
+#endif
+    putchar('\n');
+    return resultado;
 }
 
 int terminal_ler_opcao(const char *pedido) {
