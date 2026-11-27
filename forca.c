@@ -1,251 +1,147 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-void boneco(int erros);
+#define MAX_ERROS 4
 
-void limpar_buffer() {
-    int c;
-    // Lê e descarta caracteres até encontrar um '\n' ou o fim do arquivo (EOF)
-    while ((c = getchar()) != '\n' && c != EOF);
+/* Retorna 0 no fim da entrada e rejeita linhas que nao cabem no buffer. */
+static int ler_linha(char *destino, size_t tamanho) {
+    for (;;) {
+        int c;
+        size_t len;
+        if (fgets(destino, (int)tamanho, stdin) == NULL) return 0;
+        len = strlen(destino);
+        if (len > 0 && destino[len - 1] == '\n') {
+            destino[len - 1] = '\0';
+            return 1;
+        }
+        c = getchar();
+        if (c == '\n' || c == EOF) return 1;
+        while ((c = getchar()) != '\n' && c != EOF) {}
+        puts("Entrada longa demais. Tente novamente:");
+    }
 }
 
-int main(void)
-{
-    
-    char jogador1[10];
-    char jogador2[10];
-    char tema[30];  
-    char palavra[20];
-    char tentativa;
-    int advinhador;
-    int opcao = 0;
-    int pontos1 = 0;
-    int pontos2 = 0;
-    int *pontosAdvinhador;
-    int *pontosDesafiante; 
-   
-    printf("Bem vindo ao jogo da forca!\n");
-        printf(" ___   \n");
-        printf("/  |   \n");
-        printf("|  O   \n");
-        printf("| /|\\ \n");
-        printf("| / \\ \n");
-        printf("|_____ \n");
-    printf("O advinhador podera errar ate 4 vezes.\n");
-    printf("Digite o nome do Jogador 1:\n");
+static int ler_texto(const char *pedido, char *destino, size_t tamanho) {
+    do {
+        puts(pedido);
+        if (!ler_linha(destino, tamanho)) return 0;
+        if (destino[0] != '\0') return 1;
+        puts("A entrada nao pode ficar vazia.");
+    } while (1);
+}
 
-    scanf("%s", jogador1);
+static int ler_opcao(const char *pedido) {
+    char entrada[32];
+    for (;;) {
+        puts(pedido);
+        if (!ler_linha(entrada, sizeof entrada)) return 0;
+        if (strcmp(entrada, "1") == 0) return 1;
+        if (strcmp(entrada, "2") == 0) return 2;
+        puts("Opcao invalida. Digite 1 ou 2.");
+    }
+}
 
-    printf("Digite o nome do Jogador 2:\n");
+static char minuscula_ascii(char c) {
+    return c >= 'A' && c <= 'Z' ? (char)(c + ('a' - 'A')) : c;
+}
 
-    scanf("%s", jogador2);
+static int letra_ascii(char c) {
+    return c >= 'a' && c <= 'z';
+}
 
-    system("clear || cls");
-
-    while (opcao != 1) {
-      
-        int acertos = 0;
-        int erros = 0;
-
-        printf("Pontos de %s: %d\n", jogador1, pontos1);
-        printf("Pontos de %s: %d\n", jogador2, pontos2);
-
-        printf("Digite o numero de quem advinhara a palavra secreta:\n");
-        printf("1. %s\n", jogador1);
-        printf("2. %s\n", jogador2);
-
-        scanf(" %d", &advinhador);
-
-        while ((advinhador != 1) && (advinhador != 2)) {
-
-            printf("Jogador invalido. Selecione 1. %s ou 2. %s\n", jogador1, jogador2);
-
-            scanf("%d", &advinhador);
-
-        } 
-
-        system("clear || cls");
-    
-        if (advinhador == 1) {
-
-            pontosAdvinhador = &pontos1;
-            pontosDesafiante = &pontos2;
-
-            printf("%s, qual o tema da palavra secreta?\n", jogador2);
-            scanf("%s", tema);
-            printf("%s, digite a palavra secreta:\n", jogador2);
-            scanf("%s", palavra);
-
-
-
-        } else if (advinhador == 2) {
-
-            pontosAdvinhador = &pontos2;
-            pontosDesafiante = &pontos1;
-
-            printf("%s, qual o tema da palavra secreta?\n", jogador1);
-            scanf("%s", tema);
-            printf("%s, digite a palavra secreta:\n", jogador1);
-            scanf("%s", palavra);
-
+static int ler_palavra(char *palavra, size_t tamanho) {
+    for (;;) {
+        size_t i;
+        if (!ler_texto("Digite a palavra secreta (apenas letras sem acento):", palavra, tamanho)) return 0;
+        for (i = 0; palavra[i] != '\0'; i++) {
+            palavra[i] = minuscula_ascii(palavra[i]);
+            if (!letra_ascii(palavra[i])) break;
         }
-        
-        system("clear || cls");
+        if (palavra[i] == '\0') return 1;
+        puts("Use apenas letras de A a Z, sem acentos ou espacos.");
+    }
+}
 
-        printf("A palavra secreta foi definida. Vamos comecar o jogo!\n");
-        printf("O tema da palavra secreta e: %s\n", tema);
-        printf("A palavra secreta tem %lu letras.\n", strlen(palavra));
+static void boneco(int erros) {
+    static const char *desenhos[] = {
+        " ___\n/  |\n|\n|\n|\n|_____",
+        " ___\n/  |\n|  O\n|\n|\n|_____",
+        " ___\n/  |\n|  O\n|  |\n|\n|_____",
+        " ___\n/  |\n|  O\n| /|\\\n|\n|_____",
+        " ___\n/  |\n|  O\n| /|\\\n| / \\\n|_____"
+    };
+    puts(desenhos[erros]);
+}
 
-        int tamanho = strlen(palavra); 
-        char letrasCertas[20]; 
+int main(void) {
+    char jogadores[2][10], tema[30], palavra[20], revelada[20];
+    int pontos[2] = {0, 0};
+    int opcao;
 
-        for (int i = 0; i < tamanho; i++) {
+    puts("Bem-vindo ao jogo da forca! O adivinhador pode errar 4 vezes.");
+    if (!ler_texto("Nome do jogador 1 (ate 9 caracteres):", jogadores[0], sizeof jogadores[0]) ||
+        !ler_texto("Nome do jogador 2 (ate 9 caracteres):", jogadores[1], sizeof jogadores[1])) return 0;
 
-            if (palavra[i] == ' ') {
-                letrasCertas[i] = palavra[i];
-            } else {
-                letrasCertas[i] = '_';
+    do {
+        int adivinhador, desafiante, erros = 0;
+        int tentadas[26] = {0};
+        size_t i, tamanho;
+        char entrada[32];
+
+        printf("Pontos: %s %d x %d %s\n", jogadores[0], pontos[0], pontos[1], jogadores[1]);
+        printf("Quem vai adivinhar? 1. %s  2. %s\n", jogadores[0], jogadores[1]);
+        opcao = ler_opcao("Digite 1 ou 2:");
+        if (!opcao) return 0;
+        adivinhador = opcao - 1;
+        desafiante = 1 - adivinhador;
+        printf("%s, escolha o tema e a palavra. O outro jogador deve desviar o olhar.\n", jogadores[desafiante]);
+        if (!ler_texto("Tema (ate 29 caracteres):", tema, sizeof tema) ||
+            !ler_palavra(palavra, sizeof palavra)) return 0;
+
+        /* Afasta a palavra da tela sem depender de comandos do sistema. */
+        for (i = 0; i < 40; i++) putchar('\n');
+        tamanho = strlen(palavra);
+        memset(revelada, '_', tamanho);
+        revelada[tamanho] = '\0';
+        printf("Tema: %s. A palavra tem %zu letras.\n", tema, tamanho);
+        boneco(erros);
+        while (erros < MAX_ERROS && strcmp(revelada, palavra) != 0) {
+            char tentativa;
+            int encontrou = 0;
+            printf("Palavra: %s\nDigite uma letra: ", revelada);
+            if (!ler_linha(entrada, sizeof entrada)) return 0;
+            tentativa = minuscula_ascii(entrada[0]);
+            if (entrada[0] == '\0' || entrada[1] != '\0' || !letra_ascii(tentativa)) {
+                puts("Digite uma unica letra de A a Z, sem acento.");
+                continue;
             }
-
-        }
-        letrasCertas[tamanho] = '\0';
-
-        while ((erros < 4) && (strcmp(letrasCertas, palavra) != 0) && (acertos < tamanho)) {
-
-            printf("Palavra: %s\n", letrasCertas);
-            printf("Digite uma letra:\n");
-
-            scanf(" %c", &tentativa);
-            limpar_buffer();
-
-            for (int i = 0; i < strlen(palavra); i++) {
-
-                if (tentativa == palavra[i]) {
-
-                    letrasCertas[i] = tentativa;
-
-                } 
-
-            }    
-
-            if (strchr(letrasCertas, tentativa) != NULL) {
-
-                acertos++;
-                printf("Letra correta!\n");
-
-            } else {
-
-                erros++;
-                printf("Letra incorreta! Voce pode errar mais %d vez(es).\n", 4 - erros);
-
+            if (tentadas[tentativa - 'a']) {
+                puts("Voce ja tentou essa letra.");
+                continue;
             }
-
+            tentadas[tentativa - 'a'] = 1;
+            for (i = 0; i < tamanho; i++) {
+                if (palavra[i] == tentativa) {
+                    revelada[i] = tentativa;
+                    encontrou = 1;
+                }
+            }
+            if (encontrou) puts("Letra correta!");
+            else printf("Letra incorreta! Restam %d erro(s).\n", MAX_ERROS - ++erros);
             boneco(erros);
-
         }
-
-        printf("Palavra: %s\n", letrasCertas);
-
-        if (strcmp(letrasCertas, palavra) == 0) {
-
-            printf("Voce ganhou a rodada!\n");
-            *pontosAdvinhador += 1;
-
+        printf("Palavra: %s\n", palavra);
+        if (strcmp(revelada, palavra) == 0) {
+            puts("Voce ganhou a rodada!");
+            pontos[adivinhador]++;
         } else {
-
-            printf("Voce perdeu! A palavra correta era %s\n", palavra);
-            *pontosDesafiante += 1;
-
+            puts("Voce perdeu a rodada!");
+            pontos[desafiante]++;
         }
-
-        printf("Digite 1 para encerrar\n");
-        printf("Digite 2 para jogar novamente\n");
-
-        scanf(" %d", &opcao);
-
-        while ((opcao != 1) && (opcao != 2)) {
-
-            printf("Opcao invalida.\n");
-            printf("Digite 1 para encerrar\n");
-            printf("Digite 2 para jogar novamente\n");
-            scanf(" %d", &opcao);
-
-        }
-
-        if (opcao == 2) {
-            acertos = 0;
-            erros = 0;
-            system("clear || cls");
-        } 
-
-    }
-
-    system("clear || cls");
-    printf("Obrigado por jogar!\n");
-    printf("Pontos de %s: %d\n", jogador1, pontos1);
-    printf("Pontos de %s: %d\n", jogador2, pontos2);
-
-    printf("pressione enter para encerrar...\n");
-    limpar_buffer();
-    getchar();     
-
+        opcao = ler_opcao("Digite 1 para encerrar ou 2 para jogar novamente:");
+        if (!opcao) return 0;
+    } while (opcao == 2);
+    printf("Obrigado por jogar! Pontos: %s %d x %d %s\n", jogadores[0], pontos[0], pontos[1], jogadores[1]);
+    return 0;
 }
 
-void boneco(int erros) {
-    
-    switch(erros) {
-
-        case 0:
-
-        printf(" ___   \n");
-        printf("/  |   \n");
-        printf("|      \n");
-        printf("|      \n");
-        printf("|      \n");
-        printf("|_____ \n");
-        break;
-        
-        case 1:
-        
-        printf(" ___  \n");
-        printf("/  |  \n");
-        printf("|  O  \n");
-        printf("|     \n");
-        printf("|     \n");
-        printf("|_____\n");
-        break;
-        
-        case 2:
-        
-        printf(" ___  \n");
-        printf("/  |  \n");
-        printf("|  O  \n");
-        printf("|  |  \n");
-        printf("|     \n");
-        printf("|_____\n");
-        break;
-        
-        case 3: 
-        
-        printf(" ___   \n");
-        printf("/  |   \n");
-        printf("|  O   \n");
-        printf("| /|\\ \n");
-        printf("|      \n");
-        printf("|_____ \n");
-        break;
-        
-        case 4: 
-        
-        printf(" ___   \n");
-        printf("/  |   \n");
-        printf("|  O   \n");
-        printf("| /|\\ \n");
-        printf("| / \\ \n");
-        printf("|_____ \n");
-        break;
-        
-    }
-    
-}
