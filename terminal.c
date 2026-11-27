@@ -135,6 +135,18 @@ int terminal_ler_opcao(const char *pedido) {
     }
 }
 
+int terminal_ler_dificuldade(void) {
+    char entrada[32];
+    for (;;) {
+        puts("Dificuldade: 1. Facil (6 erros)  2. Normal (4 erros)  3. Dificil (3 erros)");
+        if (!ler_linha(entrada, sizeof entrada)) return 0;
+        if (!strcmp(entrada, "1")) return 6;
+        if (!strcmp(entrada, "2")) return 4;
+        if (!strcmp(entrada, "3")) return 3;
+        puts("Opcao invalida. Digite 1, 2 ou 3.");
+    }
+}
+
 int terminal_ler_letra(char *letra) {
     char entrada[32];
     for (;;) {
@@ -155,13 +167,15 @@ void terminal_esconder_palavra(void) {
 void terminal_mostrar_jogo(const Jogo *jogo, const char *tema) {
     static const char *desenhos[] = {
         " ___\n/  |\n|\n|\n|\n|_____", " ___\n/  |\n|  O\n|\n|\n|_____",
-        " ___\n/  |\n|  O\n|  |\n|\n|_____", " ___\n/  |\n|  O\n| /|\\\n|\n|_____",
+        " ___\n/  |\n|  O\n|  |\n|\n|_____", " ___\n/  |\n|  O\n| /|\n|\n|_____",
+        " ___\n/  |\n|  O\n| /|\\\n|\n|_____",
+        " ___\n/  |\n|  O\n| /|\\\n| /\n|_____",
         " ___\n/  |\n|  O\n| /|\\\n| / \\\n|_____"
     };
     size_t i;
     int alguma = 0;
     printf("\n--- TEMA: %s ---\n", tema);
-    puts(desenhos[jogo->erros]);
+    puts(desenhos[jogo->erros * LIMITE_ERROS / jogo->max_erros]);
     printf("Palavra: ");
     for (i = 0; jogo->revelada[i]; i++) {
         unsigned char c = (unsigned char)jogo->revelada[i];
@@ -172,6 +186,6 @@ void terminal_mostrar_jogo(const Jogo *jogo, const char *tema) {
     printf("\nLetras tentadas: ");
     for (i = 0; i < 26; i++) if (jogo->tentadas[i]) { printf("%c ", (int)('A' + i)); alguma = 1; }
     if (!alguma) printf("nenhuma");
-    printf("\nErros restantes: %d\n", MAX_ERROS - jogo->erros);
+    printf("\nErros restantes: %d\n", jogo->max_erros - jogo->erros);
 }
 

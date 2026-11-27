@@ -32,10 +32,12 @@ static void atualizar(Jogo *j) {
     j->revelada[saida] = '\0';
 }
 
-int jogo_iniciar(Jogo *j, const char *palavra) {
+int jogo_iniciar(Jogo *j, const char *palavra, int max_erros) {
     size_t p = 0, i = 0, n;
     int tem_letra = 0;
     Jogo novo = {0};
+    if (max_erros < 1 || max_erros > LIMITE_ERROS) return 0;
+    novo.max_erros = max_erros;
     while (palavra[p]) {
         char b;
         if (i == MAX_LETRAS) return 0;
@@ -54,7 +56,7 @@ int jogo_iniciar(Jogo *j, const char *palavra) {
 
 EstadoJogo jogo_estado(const Jogo *j) {
     if (!strcmp(j->palavra, j->revelada)) return VITORIA;
-    return j->erros >= MAX_ERROS ? DERROTA : EM_ANDAMENTO;
+    return j->erros >= j->max_erros ? DERROTA : EM_ANDAMENTO;
 }
 
 ResultadoTentativa jogo_tentar(Jogo *j, char letra) {

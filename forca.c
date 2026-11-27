@@ -14,7 +14,7 @@ int main(void) {
 #ifdef _WIN32
     if (GetConsoleWindow()) { SetConsoleCP(CP_UTF8); SetConsoleOutputCP(CP_UTF8); }
 #endif
-    puts("=== JOGO DA FORCA ===\nDuas pessoas jogam: uma escolhe a frase e a outra adivinha.\nSao permitidos 4 erros por rodada. Letras e espacos sao aceitos; acentos sao revelados pela letra sem acento.");
+    puts("=== JOGO DA FORCA ===\nDuas pessoas jogam: uma escolhe a frase e a outra adivinha.\nLetras e espacos sao aceitos; acentos sao revelados pela letra sem acento.");
     if (!terminal_ler_texto("Nome do jogador 1 (ate 9 caracteres):", jogadores[0], sizeof jogadores[0]) ||
         !terminal_ler_texto("Nome do jogador 2 (ate 9 caracteres):", jogadores[1], sizeof jogadores[1])) return 0;
     if (!strcmp(jogadores[0], jogadores[1])) { puts("Os nomes devem ser diferentes para identificar o placar."); return 1; }
@@ -28,12 +28,15 @@ int main(void) {
     adivinhador = opcao - 1;
     do {
         Jogo jogo;
+        int limite;
         printf("\n=== PLACAR: %s %d x %d %s ===\n", jogadores[0], pontos[0], pontos[1], jogadores[1]);
         printf("%s vai adivinhar. %s, escolha o tema e a palavra; o outro jogador deve desviar o olhar.\n", jogadores[adivinhador], jogadores[1-adivinhador]);
+        limite = terminal_ler_dificuldade();
+        if (!limite) return 0;
         if (!terminal_ler_texto("Tema (ate 29 caracteres):", tema, sizeof tema)) return 0;
         do {
             if (!terminal_ler_segredo("Palavra ou frase (ate 19 letras e espacos, acentos aceitos). A digitacao fica oculta:", palavra, sizeof palavra)) return 0;
-            if (jogo_iniciar(&jogo, palavra)) break;
+            if (jogo_iniciar(&jogo, palavra, limite)) break;
             puts("Use ate 19 letras portuguesas e espacos; inclua ao menos uma letra.");
         } while (1);
         terminal_esconder_palavra();
