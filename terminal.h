@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include "jogo.h"
 int terminal_ler_texto(const char *pedido, char *destino, size_t tamanho);
+int terminal_ler_segredo(const char *pedido, char *destino, size_t tamanho);
 int terminal_ler_opcao(const char *pedido);
 int terminal_ler_letra(char *letra);
 void terminal_esconder_palavra(void);
