@@ -32,7 +32,7 @@ int main(void) {
         printf("%s vai adivinhar. %s, escolha o tema e a palavra; o outro jogador deve desviar o olhar.\n", jogadores[adivinhador], jogadores[1-adivinhador]);
         if (!terminal_ler_texto("Tema (ate 29 caracteres):", tema, sizeof tema)) return 0;
         do {
-            if (!terminal_ler_texto("Palavra ou frase (ate 19 letras e espacos, acentos aceitos):", palavra, sizeof palavra)) return 0;
+            if (!terminal_ler_segredo("Palavra ou frase (ate 19 letras e espacos, acentos aceitos). A digitacao fica oculta:", palavra, sizeof palavra)) return 0;
             if (jogo_iniciar(&jogo, palavra)) break;
             puts("Use ate 19 letras portuguesas e espacos; inclua ao menos uma letra.");
         } while (1);
