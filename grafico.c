@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef enum { MENU, PREPARAR, JOGAR, RESULTADO, RANKING, PERFIS, SELECIONAR, NOVO_PERFIL } Tela;
+typedef enum { MENU, PREPARAR, SEGREDO, JOGAR, RESULTADO, RANKING, PERFIS, SELECIONAR, NOVO_PERFIL } Tela;
 typedef struct { char nome[256]; int pontos; } Jogador;
 static const Color fundo = {20, 23, 38, 255}, painel = {35, 39, 57, 255};
 static const Color roxo = {166, 148, 255, 255}, verde = {207, 247, 112, 255};
@@ -82,7 +82,7 @@ static void forca(int erros, int max) {
 }
 
 int main(void) {
-    Tela tela=MENU, origem_perfil=PERFIS; Jogo jogo; int campo_ativo=0, adiv=0, limite=4, pontos[2]={0,0}, salvo=1;
+    Tela tela=MENU, origem_perfil=PERFIS; Jogo jogo; int campo_ativo=0, adiv=-1, limite=0, pontos[2]={0,0}, salvo=1;
     char nomes[2][10]={{0}}, tema[30]={0}, segredo[TAM_PALAVRA]={0}, mensagem[160]={0};
     char nome_novo[PERFIL_NOME]={0}; Perfis perfis={0};
     const char *arquivo_perfis="perfis-forca.txt";
@@ -106,29 +106,42 @@ int main(void) {
             if(botao((Rectangle){70,531,240,52},"Sair",painel,texto)) { EndDrawing(); CloseWindow(); return 0; }
             BeginMode2D((Camera2D){.offset={460,25},.zoom=1}); forca(6,6); EndMode2D();
         } else if(tela==PREPARAR) {
-            Rectangle caixas[]={{80,147,360,48},{500,147,360,48},{80,239,780,48},{80,331,780,48}};
-            DrawText("Prepare a rodada", 60, 74, 34, texto);
-            DrawText("Quem vai adivinhar deve desviar o olhar.", 80, 625, 17, suave);
+            Rectangle caixas[]={{80,147,360,48},{500,147,360,48}};
+            DrawText("Escolha os jogadores", 60, 74, 34, texto);
             DrawText("Jogador 1",80,123,17,suave); DrawText("Jogador 2",500,123,17,suave);
             if(botao(caixas[0],nomes[0][0]?nomes[0]:"Selecionar perfil",painel,texto)) { perfis_ok=perfis_carregar(&perfis,arquivo_perfis); selecao_jogador=0; pagina=0; mensagem[0]=0; tela=SELECIONAR; }
             if(botao(caixas[1],nomes[1][0]?nomes[1]:"Selecionar perfil",painel,texto)) { perfis_ok=perfis_carregar(&perfis,arquivo_perfis); selecao_jogador=1; pagina=0; mensagem[0]=0; tela=SELECIONAR; }
-            if(click && CheckCollisionPointRec(GetMousePosition(),caixas[2])) campo_ativo=0;
-            if(click && CheckCollisionPointRec(GetMousePosition(),caixas[3])) campo_ativo=1;
-            campo(caixas[2],"Tema",tema,campo_ativo==0,0); campo(caixas[3],"Palavra ou frase secreta (ate 60 caracteres)",segredo,campo_ativo==1,1);
+            DrawText("Quem vai adivinhar?",80,235,20,suave);
+            if(botao((Rectangle){80,270,360,48},nomes[0][0]?nomes[0]:"Jogador 1",adiv==0?roxo:painel,texto) && nomes[0][0]) adiv=0;
+            if(botao((Rectangle){500,270,360,48},nomes[1][0]?nomes[1]:"Jogador 2",adiv==1?roxo:painel,texto) && nomes[1][0]) adiv=1;
+            DrawText("Dificuldade",80,360,20,suave);
+            if(botao((Rectangle){80,395,230,48},"Facil: 6 erros",limite==6?roxo:painel,texto)) limite=6;
+            if(botao((Rectangle){325,395,230,48},"Normal: 4 erros",limite==4?roxo:painel,texto)) limite=4;
+            if(botao((Rectangle){570,395,230,48},"Dificil: 3 erros",limite==3?roxo:painel,texto)) limite=3;
+            DrawText(mensagem,80,505,18,(Color){255,160,160,255});
+            if(botao((Rectangle){80,550,190,48},"Voltar",painel,texto)) {tela=MENU;mensagem[0]=0;}
+            if(botao((Rectangle){600,550,260,48},"Continuar",verde,fundo)) {
+                if(!nomes[0][0] || !nomes[1][0] || !strcmp(nomes[0],nomes[1])) snprintf(mensagem,sizeof mensagem,"Selecione dois perfis diferentes.");
+                else if(adiv<0) snprintf(mensagem,sizeof mensagem,"Escolha quem vai adivinhar.");
+                else if(!limite) snprintf(mensagem,sizeof mensagem,"Escolha a dificuldade.");
+                else { mensagem[0]=0; campo_ativo=0; tela=SEGREDO; }
+            }
+        } else if(tela==SEGREDO) {
+            Rectangle caixas[]={{80,220,780,52},{80,330,780,52}};
+            DrawText("Defina a palavra",60,74,34,texto);
+            DrawText(TextFormat("%s, escolha o tema e a palavra.",nomes[1-adiv]),80,132,20,suave);
+            DrawText(TextFormat("%s deve desviar o olhar.",nomes[adiv]),80,160,18,suave);
+            if(click && CheckCollisionPointRec(GetMousePosition(),caixas[0])) campo_ativo=0;
+            if(click && CheckCollisionPointRec(GetMousePosition(),caixas[1])) campo_ativo=1;
+            campo(caixas[0],"Tema",tema,campo_ativo==0,0);
+            campo(caixas[1],"Palavra ou frase secreta (ate 60 caracteres)",segredo,campo_ativo==1,1);
             while((cp=GetCharPressed())>0) inserir(campos[campo_ativo],caps[campo_ativo],cp,limites[campo_ativo]);
             if(IsKeyPressed(KEY_BACKSPACE)) apagar(campos[campo_ativo]);
             if(IsKeyPressed(KEY_TAB)) campo_ativo=(campo_ativo+1)%2;
-            DrawText("Quem adivinha?",80,415,18,suave);
-            if(botao((Rectangle){80,445,150,40},"Jogador 1",adiv==0?roxo:painel,texto)) adiv=0;
-            if(botao((Rectangle){240,445,150,40},"Jogador 2",adiv==1?roxo:painel,texto)) adiv=1;
-            DrawText("Dificuldade",500,415,18,suave);
-            if(botao((Rectangle){500,445,110,40},"Facil",limite==6?roxo:painel,texto)) limite=6;
-            if(botao((Rectangle){620,445,110,40},"Normal",limite==4?roxo:painel,texto)) limite=4;
-            if(botao((Rectangle){740,445,120,40},"Dificil",limite==3?roxo:painel,texto)) limite=3;
-            DrawText(mensagem,80,505,18,(Color){255,160,160,255});
-            if(botao((Rectangle){80,550,190,48},"Voltar",painel,texto)) {tela=MENU;mensagem[0]=0;}
+            DrawText(mensagem,80,450,18,(Color){255,160,160,255});
+            if(botao((Rectangle){80,550,190,48},"Voltar",painel,texto)) { tela=PREPARAR; mensagem[0]=0; }
             if(botao((Rectangle){600,550,260,48},"Comecar rodada",verde,fundo)) {
-                if(!nomes[0][0] || !nomes[1][0] || !tema[0] || !strcmp(nomes[0],nomes[1])) snprintf(mensagem,sizeof mensagem,"Selecione dois perfis diferentes e informe um tema.");
+                if(!tema[0]) snprintf(mensagem,sizeof mensagem,"Informe um tema.");
                 else if(!jogo_iniciar(&jogo,segredo,limite)) snprintf(mensagem,sizeof mensagem,"Use letras portuguesas e espacos na palavra.");
                 else { if(!placar_ler(arquivo,nomes[0],&pontos[0]) || !placar_ler(arquivo,nomes[1],&pontos[1])) snprintf(mensagem,sizeof mensagem,"Nao foi possivel ler o placar."); else mensagem[0]=0; memset(segredo,0,sizeof segredo); tela=JOGAR; }
             }
@@ -167,7 +180,7 @@ int main(void) {
                 Rectangle r={60.0f+(float)((i-inicio)%2)*410,145.0f+(float)((i-inicio)/2)*72,380,52};
                 if(botao(r,perfis.nomes[i],painel,texto) && tela==SELECIONAR) {
                     if(!strcmp(nomes[1-selecao_jogador],perfis.nomes[i])) snprintf(mensagem,sizeof mensagem,"Escolha um perfil diferente para cada jogador.");
-                    else { strcpy(nomes[selecao_jogador],perfis.nomes[i]); mensagem[0]=0; tela=PREPARAR; }
+                    else { if(strcmp(nomes[selecao_jogador],perfis.nomes[i])) adiv=-1; strcpy(nomes[selecao_jogador],perfis.nomes[i]); mensagem[0]=0; tela=PREPARAR; }
                 }
             }
             DrawText(mensagem,60,450,18,(Color){255,160,160,255});
