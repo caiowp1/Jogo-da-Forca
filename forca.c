@@ -52,13 +52,15 @@ static int letra_ascii(char c) {
 static int ler_palavra(char *palavra, size_t tamanho) {
     for (;;) {
         size_t i;
-        if (!ler_texto("Digite a palavra secreta (apenas letras sem acento):", palavra, tamanho)) return 0;
+        int tem_letra = 0;
+        if (!ler_texto("Digite a palavra ou frase (letras sem acento e espacos):", palavra, tamanho)) return 0;
         for (i = 0; palavra[i] != '\0'; i++) {
             palavra[i] = minuscula_ascii(palavra[i]);
-            if (!letra_ascii(palavra[i])) break;
+            if (letra_ascii(palavra[i])) tem_letra = 1;
+            else if (palavra[i] != ' ') break;
         }
-        if (palavra[i] == '\0') return 1;
-        puts("Use apenas letras de A a Z, sem acentos ou espacos.");
+        if (palavra[i] == '\0' && tem_letra) return 1;
+        puts("Use letras de A a Z e espacos, sem acentos; inclua ao menos uma letra.");
     }
 }
 
@@ -101,9 +103,9 @@ int main(void) {
         /* Afasta a palavra da tela sem depender de comandos do sistema. */
         for (i = 0; i < 40; i++) putchar('\n');
         tamanho = strlen(palavra);
-        memset(revelada, '_', tamanho);
+        for (i = 0; i < tamanho; i++) revelada[i] = palavra[i] == ' ' ? ' ' : '_';
         revelada[tamanho] = '\0';
-        printf("Tema: %s. A palavra tem %zu letras.\n", tema, tamanho);
+        printf("Tema: %s. A palavra ou frase tem %zu caracteres, incluindo espacos.\n", tema, tamanho);
         boneco(erros);
         while (erros < MAX_ERROS && strcmp(revelada, palavra) != 0) {
             char tentativa;
