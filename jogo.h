@@ -1,7 +1,7 @@
 #ifndef JOGO_H
 #define JOGO_H
 
-#define MAX_LETRAS 19
+#define MAX_LETRAS 60
 #define TAM_PALAVRA (MAX_LETRAS * 4 + 1)
 #define LIMITE_ERROS 6
 

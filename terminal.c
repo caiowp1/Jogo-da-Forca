@@ -147,6 +147,16 @@ int terminal_ler_dificuldade(void) {
     }
 }
 
+int terminal_ler_menu(void) {
+    char entrada[32];
+    for (;;) {
+        puts("\n1. Jogar  2. Ranking  3. Historico de vitorias  4. Sair");
+        if (!ler_linha(entrada, sizeof entrada)) return 0;
+        if (strlen(entrada) == 1 && entrada[0] >= '1' && entrada[0] <= '4') return entrada[0] - '0';
+        puts("Opcao invalida. Digite 1, 2, 3 ou 4.");
+    }
+}
+
 int terminal_ler_letra(char *letra) {
     char entrada[32];
     for (;;) {

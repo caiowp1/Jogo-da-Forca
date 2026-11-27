@@ -15,6 +15,13 @@ int main(void) {
     if (GetConsoleWindow()) { SetConsoleCP(CP_UTF8); SetConsoleOutputCP(CP_UTF8); }
 #endif
     puts("=== JOGO DA FORCA ===\nDuas pessoas jogam: uma escolhe a frase e a outra adivinha.\nLetras e espacos sao aceitos; acentos sao revelados pela letra sem acento.");
+    for (;;) {
+        opcao = terminal_ler_menu();
+        if (!opcao || opcao == 4) return 0;
+        if (opcao == 1) break;
+        if (!(opcao == 2 ? placar_mostrar_ranking(arquivo) : placar_mostrar_historico(arquivo)))
+            puts("Nao foi possivel ler o historico do placar.");
+    }
     if (!terminal_ler_texto("Nome do jogador 1 (ate 9 caracteres):", jogadores[0], sizeof jogadores[0]) ||
         !terminal_ler_texto("Nome do jogador 2 (ate 9 caracteres):", jogadores[1], sizeof jogadores[1])) return 0;
     if (!strcmp(jogadores[0], jogadores[1])) { puts("Os nomes devem ser diferentes para identificar o placar."); return 1; }
@@ -35,9 +42,9 @@ int main(void) {
         if (!limite) return 0;
         if (!terminal_ler_texto("Tema (ate 29 caracteres):", tema, sizeof tema)) return 0;
         do {
-            if (!terminal_ler_segredo("Palavra ou frase (ate 19 letras e espacos, acentos aceitos). A digitacao fica oculta:", palavra, sizeof palavra)) return 0;
+            if (!terminal_ler_segredo("Palavra ou frase (ate 60 letras e espacos, acentos aceitos). A digitacao fica oculta:", palavra, sizeof palavra)) return 0;
             if (jogo_iniciar(&jogo, palavra, limite)) break;
-            puts("Use ate 19 letras portuguesas e espacos; inclua ao menos uma letra.");
+            puts("Use ate 60 letras portuguesas e espacos; inclua ao menos uma letra.");
         } while (1);
         terminal_esconder_palavra();
         while (jogo_estado(&jogo) == EM_ANDAMENTO) {

@@ -6,7 +6,9 @@ int main(void) {
     Jogo j;
     assert(!jogo_iniciar(&j, "   ", 4));
     assert(!jogo_iniciar(&j, "ola!", 4));
-    assert(!jogo_iniciar(&j, "abcdefghijklmnopqrst", 4));
+    assert(jogo_iniciar(&j, "parque nacional do jau", 4));
+    assert(jogo_iniciar(&j, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 4));
+    assert(!jogo_iniciar(&j, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 4));
     assert(!jogo_iniciar(&j, "casa", 0));
     assert(!jogo_iniciar(&j, "casa", 7));
     assert(jogo_iniciar(&j, "Casa Azul", 4));
